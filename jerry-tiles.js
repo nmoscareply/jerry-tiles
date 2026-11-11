@@ -1,4 +1,4 @@
-/* Jerry the Berry ‚Äì tiles renderer v1
+/* Jerry the Berry - tiles renderer v1
    Usage in the artifact:
    <div id="jerry"></div>
    <script>window.JERRY={...}</script>
@@ -8,35 +8,35 @@
   "use strict";
 
   var TOPICS = {
-    ai: ["üß†", "AI & Machine Learning"],
-    data: ["üìä", "Data & Analytics"],
-    cloud: ["‚òÅÔ∏è", "Cloud Computing"],
-    sec: ["üîê", "Cybersecurity"],
-    swe: ["‚öôÔ∏è", "Software Engineering"],
-    ux: ["üëæ", "Design & UX"],
-    prod: ["üì¶", "Product Management"],
-    proj: ["üóÇÔ∏è", "Project Management"],
-    lead: ["üß≠", "Leadership"],
-    biz: ["‚ôüÔ∏è", "Business Strategy"],
-    inno: ["üöÄ", "Innovation & Entrepreneurship"],
-    fin: ["üè¶", "Finance & Fintech"],
-    soft: ["üí¨", "Soft Skills"]
+    ai: ["\ud83e\udde0", "AI & Machine Learning"],
+    data: ["\ud83d\udcca", "Data & Analytics"],
+    cloud: ["\u2601\ufe0f", "Cloud Computing"],
+    sec: ["\ud83d\udd10", "Cybersecurity"],
+    swe: ["\u2699\ufe0f", "Software Engineering"],
+    ux: ["\ud83d\udc7e", "Design & UX"],
+    prod: ["\ud83d\udce6", "Product Management"],
+    proj: ["\ud83d\uddc2\ufe0f", "Project Management"],
+    lead: ["\ud83e\udded", "Leadership"],
+    biz: ["\u265f\ufe0f", "Business Strategy"],
+    inno: ["\ud83d\ude80", "Innovation & Entrepreneurship"],
+    fin: ["\ud83c\udfe6", "Finance & Fintech"],
+    soft: ["\ud83d\udcac", "Soft Skills"]
   };
   var TOPIC_ORDER = Object.keys(TOPICS);
 
   var CLUSTERS = {
-    conf: { e: "üé§", n: "Conferences", bg: "linear-gradient(135deg,#FF1A71,#322A7F)", kind: "event" },
-    att: { e: "üìú", n: "Certificates of Attendance", bg: "#00D8B4", kind: "event" },
-    course: { e: "üéì", n: "Online Courses", bg: "linear-gradient(135deg,#322A7F,#00D8B4)", kind: "course" },
-    cert: { e: "üèÖ", n: "Certifications", bg: "linear-gradient(135deg,#00D8B4,#EAFF26)", kind: "course" },
-    soft: { e: "üí¨", n: "Soft Skills Courses", bg: "linear-gradient(135deg,#EAFF26,#FF1A71)", kind: "course" },
-    sub: { e: "üîÑ", n: "Subscriptions", bg: "linear-gradient(135deg,#322A7F,#EAFF26)", kind: "course" },
-    book: { e: "üìö", n: "Books", bg: "#322A7F", kind: "book" }
+    conf: { e: "\ud83c\udfa4", n: "Conferences", bg: "linear-gradient(135deg,#FF1A71,#322A7F)", kind: "event" },
+    att: { e: "\ud83d\udcdc", n: "Certificates of Attendance", bg: "#00D8B4", kind: "event" },
+    course: { e: "\ud83c\udf93", n: "Online Courses", bg: "linear-gradient(135deg,#322A7F,#00D8B4)", kind: "course" },
+    cert: { e: "\ud83c\udfc5", n: "Certifications", bg: "linear-gradient(135deg,#00D8B4,#EAFF26)", kind: "course" },
+    soft: { e: "\ud83d\udcac", n: "Soft Skills Courses", bg: "linear-gradient(135deg,#EAFF26,#FF1A71)", kind: "course" },
+    sub: { e: "\ud83d\udd04", n: "Subscriptions", bg: "linear-gradient(135deg,#322A7F,#EAFF26)", kind: "course" },
+    book: { e: "\ud83d\udcda", n: "Books", bg: "#322A7F", kind: "book" }
   };
   var CLUSTER_ORDER = ["conf", "att", "course", "cert", "soft", "sub", "book"];
-  var FORMATS = { online: "üíª Online", presence: "üìç In presence", paper: "üìÑ Paper" };
+  var FORMATS = { online: "\ud83d\udcbb Online", presence: "\ud83d\udccd In presence", paper: "\ud83d\udcc4 Paper" };
   var MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  var NOTICE = "üçì The Berries shown are indicative and refer to the conference ticket only: the final value depends on the ticket chosen (number of days, options and add-ons, early bird or standard rate). Flights and accommodation are not included in this estimate: please check with the Reply Social Network team.";
+  var NOTICE = "\ud83c\udf53 The Berries shown are indicative and refer to the conference ticket only: the final value depends on the ticket chosen (number of days, options and add-ons, early bird or standard rate). Flights and accommodation are not included in this estimate: please check with the Reply Social Network team.";
 
   var CSS = [
     "#jerry{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;color:#1f2937;max-width:1100px;margin:0 auto;padding:16px}",
@@ -107,17 +107,17 @@
     var a = fmtDate(s), b = fmtDate(e);
     if (typeof a === "string") return a;
     if (typeof b === "string" || !e) return a.d + " " + a.m + " " + a.y;
-    if (a.y === b.y && a.m === b.m) return a.d === b.d ? a.d + " " + a.m + " " + a.y : a.d + "‚Äì" + b.d + " " + b.m + " " + b.y;
-    if (a.y === b.y) return a.d + " " + a.m + " ‚Äì " + b.d + " " + b.m + " " + b.y;
-    return a.d + " " + a.m + " " + a.y + " ‚Äì " + b.d + " " + b.m + " " + b.y;
+    if (a.y === b.y && a.m === b.m) return a.d === b.d ? a.d + " " + a.m + " " + a.y : a.d + "\u2013" + b.d + " " + b.m + " " + b.y;
+    if (a.y === b.y) return a.d + " " + a.m + " \u2013 " + b.d + " " + b.m + " " + b.y;
+    return a.d + " " + a.m + " " + a.y + " \u2013 " + b.d + " " + b.m + " " + b.y;
   }
 
   function berriesText(it) {
-    if (it.est === 2 || it.b == null) return "üçì Berries to be evaluated by RSN";
+    if (it.est === 2 || it.b == null) return "\ud83c\udf53 Berries to be evaluated by RSN";
     var n = Math.ceil(it.b);
-    if (it.est === 1) return "üçì ~" + n + " Berries (estimate)";
-    if (it.c === "conf") return "üçì " + n + " Berries for conference ticket";
-    return "üçì " + n + " Berries";
+    if (it.est === 1) return "\ud83c\udf53 ~" + n + " Berries (estimate)";
+    if (it.c === "conf") return "\ud83c\udf53 " + n + " Berries for conference ticket";
+    return "\ud83c\udf53 " + n + " Berries";
   }
 
   function aboveBalance(it) {
@@ -161,12 +161,12 @@
     var t = topicOf(it);
     w.appendChild(el("span", "j-pill", t.e + " " + t.n));
     (extra || []).forEach(function (x) { if (x) w.appendChild(el("span", "j-pill", x)); });
-    if (aboveBalance(it)) w.appendChild(el("span", "j-warn", "‚ö†Ô∏è Above your balance"));
+    if (aboveBalance(it)) w.appendChild(el("span", "j-warn", "\u26a0\ufe0f Above your balance"));
     return w;
   }
 
   function noLink(body, it) {
-    if (!it.l) body.appendChild(el("span", "j-ask", "‚ÑπÔ∏è Ask the RSN team for details"));
+    if (!it.l) body.appendChild(el("span", "j-ask", "\u2139\ufe0f Ask the RSN team for details"));
   }
 
   function toast(msg) {
@@ -178,7 +178,7 @@
   }
 
   function tripButton(it) {
-    var b = el("button", "j-trip", "‚úàÔ∏è Add hotel & flights");
+    var b = el("button", "j-trip", "\u2708\ufe0f Add hotel & flights");
     b.type = "button";
     b.addEventListener("click", function (ev) {
       ev.preventDefault();
@@ -186,7 +186,7 @@
       var txt = "Make an estimate for travel and accommodation expenses for " + it.t +
         " (" + (it.loc || "") + ", " + fmtRange(it.s, it.e) + ")";
       try { window.parent.postMessage({ type: "jerry-trip", text: txt }, "*"); } catch (e) {}
-      var ok = function () { toast("üìã Copied! Paste it in the chat üçì"); };
+      var ok = function () { toast("\ud83d\udccb Copied! Paste it in the chat \ud83c\udf53"); };
       var ko = function () { toast(txt); };
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(txt).then(ok, function () { fallbackCopy(txt) ? ok() : ko(); });
@@ -216,8 +216,8 @@
     card.appendChild(cover(it, "j-cover", "160px"));
     var body = el("div", "j-body");
     body.appendChild(linkOrSpan(it, "j-title", it.t));
-    if (it.loc) body.appendChild(el("div", "j-meta", "üìç " + it.loc));
-    if (it.s) body.appendChild(el("div", "j-meta", "üìÖ " + fmtRange(it.s, it.e)));
+    if (it.loc) body.appendChild(el("div", "j-meta", "\ud83d\udccd " + it.loc));
+    if (it.s) body.appendChild(el("div", "j-meta", "\ud83d\udcc5 " + fmtRange(it.s, it.e)));
     body.appendChild(el("div", "j-berries", berriesText(it)));
     body.appendChild(tags(it));
     noLink(body, it);
@@ -233,8 +233,8 @@
     body.appendChild(linkOrSpan(it, "j-title", it.t));
     body.appendChild(el("div", "j-berries", berriesText(it)));
     body.appendChild(tags(it, [FORMATS[it.f] || FORMATS.online]));
-    if (it.d && it.c !== "sub") body.appendChild(el("div", "j-meta", "‚è±Ô∏è " + it.d));
-    if (it.s) body.appendChild(el("div", "j-meta", "üìÖ " + fmtRange(it.s, it.e)));
+    if (it.d && it.c !== "sub") body.appendChild(el("div", "j-meta", "\u23f1\ufe0f " + it.d));
+    if (it.s) body.appendChild(el("div", "j-meta", "\ud83d\udcc5 " + fmtRange(it.s, it.e)));
     noLink(body, it);
     card.appendChild(body);
     return card;
@@ -244,13 +244,13 @@
     var card = el("div", "j-book");
     card.appendChild(cover(it, "j-bookcover", null));
     card.appendChild(linkOrSpan(it, "j-title", it.t));
-    if (it.a) card.appendChild(el("div", "j-author", "‚úçÔ∏è " + it.a));
+    if (it.a) card.appendChild(el("div", "j-author", "\u270d\ufe0f " + it.a));
     card.appendChild(el("div", "j-berries", berriesText(it)));
     var t = topicOf(it);
     var w = el("div", "j-tags");
     w.style.justifyContent = "center";
     w.appendChild(el("span", "j-pill", t.e + " " + t.n));
-    if (aboveBalance(it)) w.appendChild(el("span", "j-warn", "‚ö†Ô∏è Above your balance"));
+    if (aboveBalance(it)) w.appendChild(el("span", "j-warn", "\u26a0\ufe0f Above your balance"));
     card.appendChild(w);
     noLink(card, it);
     return card;
@@ -271,7 +271,7 @@
     r.appendChild(linkOrSpan(it, "j-title", it.t));
     r.appendChild(el("span", "j-berries", berriesText(it)));
     r.appendChild(el("span", "j-pill", t.e + " " + t.n));
-    if (it.s) r.appendChild(el("span", "j-meta", "üìÖ " + fmtRange(it.s, it.e)));
+    if (it.s) r.appendChild(el("span", "j-meta", "\ud83d\udcc5 " + fmtRange(it.s, it.e)));
     return r;
   }
 
@@ -299,13 +299,13 @@
     style.textContent = CSS;
     root.appendChild(style);
 
-    var h1 = el("h1", "j-h1", D.title || "üçì Picked for you");
+    var h1 = el("h1", "j-h1", D.title || "\ud83c\udf53 Picked for you");
     root.appendChild(h1);
 
-    if (typeof D.bal === "number") root.appendChild(el("div", "j-bal", "üçì My Berries: " + Math.max(0, Math.floor(D.bal))));
+    if (typeof D.bal === "number") root.appendChild(el("div", "j-bal", "\ud83c\udf53 My Berries: " + Math.max(0, Math.floor(D.bal))));
 
     if (D.empty || !D.items || !D.items.length) {
-      root.appendChild(el("div", "j-empty", "We couldn't load options right now üçì ‚Äì please try again in a moment!"));
+      root.appendChild(el("div", "j-empty", "We couldn't load options right now \ud83c\udf53 \u2013 please try again in a moment!"));
       return;
     }
 
@@ -335,7 +335,7 @@
       if (moreItems && moreItems.length) {
         more.style.display = "";
         more.open = false;
-        more.appendChild(el("summary", null, "üìã More options (" + moreItems.length + ")"));
+        more.appendChild(el("summary", null, "\ud83d\udccb More options (" + moreItems.length + ")"));
         moreItems.forEach(function (it) { more.appendChild(moreRow(it)); });
       } else {
         more.style.display = "none";
@@ -387,7 +387,7 @@
 
     var showTopic = function (k) {
       var t = TOPICS[k];
-      h1.textContent = cluster.e + " " + cluster.n + " ‚Äì " + t[0] + " " + t[1];
+      h1.textContent = cluster.e + " " + cluster.n + " \u2013 " + t[0] + " " + t[1];
       paint(byTopic[k].slice(0, 4), []);
       drawPills(k);
       try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch (e) { window.scrollTo(0, 0); }
