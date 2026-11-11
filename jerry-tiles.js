@@ -79,7 +79,7 @@
     ".j-row:first-of-type{border-top:0}",
     ".j-pills{margin-top:24px}",
     ".j-pills h3{font-size:1rem;margin:0 0 8px}",
-    ".j-toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#111827;color:#fff;padding:10px 16px;border-radius:10px;font-size:.9rem;max-width:90vw;z-index:50;box-shadow:0 6px 18px rgba(0,0,0,.25)}",
+    ".j-toast{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#111827;color:#fff;padding:10px 16px;border-radius:10px;font-size:.9rem;max-width:90vw;z-index:50;box-shadow:0 6px 18px rgba(0,0,0,.25)}",
     ".j-empty{border-radius:16px;padding:32px;color:#fff;font-weight:700;font-size:1.1rem;text-align:center;background:linear-gradient(135deg,#FF1A71,#322A7F)}"
   ].join("");
 
