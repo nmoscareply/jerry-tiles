@@ -1,13 +1,14 @@
-/* Jerry the Berry - tiles renderer v1
+/* Jerry the Berry - tiles renderer v2 (ASCII only: emoji as \uXXXX)
    Usage in the artifact:
    <div id="jerry"></div>
    <script>window.JERRY={...}</script>
    <script src="https://<host>/jerry-tiles.js"></script>
+   Same data contract as v1. Inline build: jerry-tiles.min.js
 */
-(function () {
+(() => {
   "use strict";
 
-  var TOPICS = {
+  const TOPICS = {
     ai: ["\ud83e\udde0", "AI & Machine Learning"],
     data: ["\ud83d\udcca", "Data & Analytics"],
     cloud: ["\u2601\ufe0f", "Cloud Computing"],
@@ -22,401 +23,375 @@
     fin: ["\ud83c\udfe6", "Finance & Fintech"],
     soft: ["\ud83d\udcac", "Soft Skills"]
   };
-  var TOPIC_ORDER = Object.keys(TOPICS);
+  const TOPIC_ORDER = Object.keys(TOPICS);
 
-  var CLUSTERS = {
-    conf: { e: "\ud83c\udfa4", n: "Conferences", bg: "linear-gradient(135deg,#FF1A71,#322A7F)", kind: "event" },
-    att: { e: "\ud83d\udcdc", n: "Certificates of Attendance", bg: "#00D8B4", kind: "event" },
-    course: { e: "\ud83c\udf93", n: "Online Courses", bg: "linear-gradient(135deg,#322A7F,#00D8B4)", kind: "course" },
-    cert: { e: "\ud83c\udfc5", n: "Certifications", bg: "linear-gradient(135deg,#00D8B4,#EAFF26)", kind: "course" },
-    soft: { e: "\ud83d\udcac", n: "Soft Skills Courses", bg: "linear-gradient(135deg,#EAFF26,#FF1A71)", kind: "course" },
-    sub: { e: "\ud83d\udd04", n: "Subscriptions", bg: "linear-gradient(135deg,#322A7F,#EAFF26)", kind: "course" },
-    book: { e: "\ud83d\udcda", n: "Books", bg: "#322A7F", kind: "book" }
+  const PINK = "#FF1A71", INDIGO = "#322A7F", TEAL = "#00D8B4", LIME = "#EAFF26";
+  const grad = (a, b) => `linear-gradient(135deg,${a},${b})`;
+  // lt: light cover, needs dark text
+  const CLUSTERS = {
+    conf: { e: "\ud83c\udfa4", n: "Conferences", bg: grad(PINK, INDIGO), kind: "event" },
+    att: { e: "\ud83d\udcdc", n: "Certificates of Attendance", bg: TEAL, kind: "event", lt: 1 },
+    course: { e: "\ud83c\udf93", n: "Online Courses", bg: grad(INDIGO, TEAL), kind: "course" },
+    cert: { e: "\ud83c\udfc5", n: "Certifications", bg: grad(TEAL, LIME), kind: "course" },
+    soft: { e: "\ud83d\udcac", n: "Soft Skills Courses", bg: grad(LIME, PINK), kind: "course" },
+    sub: { e: "\ud83d\udd04", n: "Subscriptions", bg: grad(INDIGO, LIME), kind: "course" },
+    book: { e: "\ud83d\udcda", n: "Books", bg: INDIGO, kind: "book" }
   };
-  var CLUSTER_ORDER = ["conf", "att", "course", "cert", "soft", "sub", "book"];
-  var FORMATS = { online: "\ud83d\udcbb Online", presence: "\ud83d\udccd In presence", paper: "\ud83d\udcc4 Paper" };
-  var MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  var NOTICE = "\ud83c\udf53 The Berries shown are indicative and refer to the conference ticket only: the final value depends on the ticket chosen (number of days, options and add-ons, early bird or standard rate). Flights and accommodation are not included in this estimate: please check with the Reply Social Network team.";
+  const CLUSTER_ORDER = Object.keys(CLUSTERS);
+  const FORMATS = { online: "\ud83d\udcbb Online", presence: "\ud83d\udccd In presence", paper: "\ud83d\udcc4 Paper" };
+  const MONTHS = "Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split(" ");
+  const NOTICE = "The Berries shown are indicative and refer to the conference ticket only: the final value depends on the ticket chosen (number of days, options and add-ons, early bird or standard rate). Flights and accommodation are not included in this estimate: please check with the Reply Social Network team.";
 
-  var CSS = [
-    "#jerry{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;color:#1f2937;max-width:1100px;margin:0 auto;padding:16px}",
-    "#jerry *{box-sizing:border-box}",
-    ".j-h1{font-size:1.6rem;font-weight:800;margin:0 0 12px}",
-    ".j-bal{display:inline-block;background:#FF1A71;color:#fff;border-radius:999px;padding:10px 20px;font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08);margin-bottom:12px}",
-    ".j-notice{background:#fff1f2;border:1px solid #fecdd3;color:#be123c;font-size:.85rem;border-radius:10px;padding:10px 12px;margin-bottom:12px}",
-    ".j-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}",
-    ".j-chip{border:1px solid #d1d5db;background:#fff;border-radius:999px;padding:6px 14px;font-size:.85rem;cursor:pointer}",
-    ".j-chip.on{background:#322A7F;color:#fff;border-color:#322A7F}",
-    ".j-grid{display:grid;grid-template-columns:1fr;gap:16px}",
-    "@media(min-width:640px){.j-grid{grid-template-columns:repeat(2,1fr)}}",
-    "@media(min-width:960px){.j-grid{grid-template-columns:repeat(3,1fr)}}",
-    ".j-grid.books{grid-template-columns:repeat(3,1fr);gap:20px}",
-    "@media(min-width:640px){.j-grid.books{grid-template-columns:repeat(4,1fr)}}",
-    ".j-card{background:#fff;border-radius:16px;box-shadow:0 2px 10px rgba(0,0,0,.08);overflow:hidden;display:flex;flex-direction:column;transition:transform .15s,box-shadow .15s}",
-    ".j-card:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,0,0,.12)}",
-    ".j-cover{display:flex;align-items:center;justify-content:center;font-size:3rem;text-decoration:none;position:relative;overflow:hidden}",
-    ".j-cover img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}",
-    ".j-body{padding:12px 14px 14px;display:flex;flex-direction:column;gap:6px;flex:1}",
-    ".j-title{font-weight:700;color:#111827;text-decoration:none}",
-    "a.j-title:hover{text-decoration:underline}",
-    ".j-meta{font-size:.85rem;color:#4b5563}",
-    ".j-berries{font-size:.9rem;font-weight:600;color:#be185d}",
-    ".j-tags{display:flex;flex-wrap:wrap;gap:6px}",
-    ".j-pill{font-size:.75rem;background:#eef2ff;color:#322A7F;border-radius:999px;padding:3px 10px}",
-    ".j-warn{font-size:.75rem;background:#f3f4f6;color:#6b7280;border-radius:999px;padding:3px 10px}",
-    ".j-ask{font-size:.8rem;color:#9ca3af}",
-    ".j-trip{margin-top:auto;background:#EAFF26;color:#111827;border:0;border-radius:999px;padding:9px 12px;font-weight:600;cursor:pointer}",
-    ".j-trip:hover{filter:brightness(.95)}",
-    ".j-book{display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px}",
-    ".j-bookcover{width:100%;max-width:140px;aspect-ratio:2/3;border-radius:2px 8px 8px 2px;box-shadow:0 10px 15px rgba(0,0,0,.2);position:relative;display:flex;align-items:center;justify-content:center;font-size:2.25rem;overflow:hidden;text-decoration:none}",
-    ".j-bookcover img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}",
-    ".j-bookcover:before{content:'';position:absolute;left:0;top:0;bottom:0;width:6px;background:rgba(0,0,0,.2);border-right:1px solid rgba(255,255,255,.6);z-index:1}",
-    ".j-book .j-title{font-weight:600;font-size:.875rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}",
-    ".j-author{font-size:.75rem;color:#6b7280}",
-    ".j-more{margin-top:20px;background:#fff;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.06);padding:10px 14px}",
-    ".j-more summary{cursor:pointer;font-weight:600}",
-    ".j-row{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;padding:8px 0;border-top:1px solid #f3f4f6;font-size:.88rem}",
-    ".j-row:first-of-type{border-top:0}",
-    ".j-pills{margin-top:24px}",
-    ".j-pills h3{font-size:1rem;margin:0 0 8px}",
-    ".j-toast{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#111827;color:#fff;padding:10px 16px;border-radius:10px;font-size:.9rem;max-width:90vw;z-index:50;box-shadow:0 6px 18px rgba(0,0,0,.25)}",
-    ".j-empty{border-radius:16px;padding:32px;color:#fff;font-weight:700;font-size:1.1rem;text-align:center;background:linear-gradient(135deg,#FF1A71,#322A7F)}"
-  ].join("");
+  const DARK = "--bg:#100e22;--cd:#1b1837;--ik:#f2f1fb;--mu:#a9a6c6;--ln:#2e2a54;--sf:#28245a;--pk:#ff6aa1";
+  const CSS =
+    ":root{--bg:#f5f4fb;--cd:#fff;--ik:#1b1840;--mu:#65627f;--ln:#e4e1f2;--sf:#eeecfa;--pk:#d4105c}" +
+    `@media(prefers-color-scheme:dark){:root:not([data-theme=light]){${DARK}}}` +
+    `:root[data-theme=dark]{${DARK}}` +
+    "body{margin:0;background:var(--bg)}" +
+    "#jerry{font:15px/1.4 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;color:var(--ik);max-width:1100px;margin:auto;padding:20px 16px 32px}" +
+    "#jerry *{box-sizing:border-box}" +
+    "#jerry [hidden]{display:none}" +
+    "#jerry button{font:inherit;cursor:pointer}" +
+    "#jerry :focus-visible{outline:2px solid #FF1A71;outline-offset:2px}" +
+    ".j-hd{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px;margin-bottom:14px}" +
+    ".j-h1{font-size:clamp(1.4rem,4vw,1.9rem);font-weight:800;letter-spacing:-.02em;line-height:1.15;margin:0}" +
+    ".j-bal{background:#322A7F;color:#fff;border-radius:99px;padding:7px 16px 7px 12px;font-weight:600;white-space:nowrap}" +
+    ".j-bal b{color:#EAFF26;font-size:1.1em}" +
+    ".j-notice{color:var(--mu);font-size:.8rem;border-left:3px solid #FF1A71;padding:1px 0 1px 10px;margin-bottom:16px;max-width:85ch}" +
+    ".j-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}" +
+    ".j-chip{border:1px solid var(--ln);background:var(--cd);color:inherit;border-radius:99px;padding:6px 14px;font-size:.85rem}" +
+    ".j-chip:hover{border-color:var(--mu)}" +
+    ".j-chip.on{background:var(--ik);color:var(--cd);border-color:var(--ik)}" +
+    ".j-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,270px),1fr));gap:16px}" +
+    ".j-grid.books{grid-template-columns:repeat(auto-fill,minmax(max(96px,22%),1fr));gap:24px 16px}" +
+    ".j-card{background:var(--cd);border:1px solid var(--ln);border-radius:18px;overflow:hidden;display:flex;flex-direction:column;transition:transform .15s,box-shadow .15s}" +
+    ".j-card:hover{transform:translateY(-3px);box-shadow:0 14px 28px -14px rgba(50,42,127,.5)}" +
+    "@media(prefers-reduced-motion:reduce){.j-card{transition:none}.j-card:hover{transform:none}}" +
+    ".j-cover,.j-bookcover{position:relative;overflow:hidden;display:flex;text-decoration:none;color:#fff}" +
+    ".j-cover{flex-direction:column;justify-content:flex-end;height:72px;padding:12px 14px}" +
+    ".j-cover.ev{height:112px}" +
+    ".j-cover.lt{color:#1b1840}" +
+    ".j-cover img,.j-bookcover img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}" +
+    ".j-cover .j-em{position:absolute;right:4px;bottom:-.22em;font-size:4rem;line-height:1;transform:rotate(-12deg)}" +
+    ".j-cover.ev .j-em{font-size:5.4rem}" +
+    ".j-cover.im{color:#fff}" +
+    ".j-cover.im .j-em{display:none}" +
+    ".j-cover.im:after{content:'';position:absolute;inset:0;background:linear-gradient(transparent 15%,rgba(16,14,34,.78))}" +
+    ".j-day,.j-mon{position:relative;z-index:1;font-weight:800;line-height:1;letter-spacing:-.03em;font-size:2.2rem}" +
+    ".j-mon{font-size:.85rem;font-weight:600;letter-spacing:0;margin-top:4px}" +
+    ".j-body{padding:14px;display:flex;flex-direction:column;gap:7px;flex:1}" +
+    ".j-title{font-weight:700;line-height:1.25;color:inherit;text-decoration:none}" +
+    "a.j-title:hover{text-decoration:underline}" +
+    ".j-meta,.j-b,.j-ask,.j-author{font-size:.85rem;color:var(--mu)}" +
+    ".j-b b{font-size:1.15rem;font-weight:800;color:var(--pk)}" +
+    ".j-tags{display:flex;flex-wrap:wrap;gap:6px}" +
+    ".j-pill,.j-warn{font-size:.75rem;border-radius:99px;padding:3px 10px;background:var(--sf)}" +
+    ".j-warn{background:0;border:1px dashed var(--mu);color:var(--mu);padding:2px 9px}" +
+    ".j-ask,.j-author{font-size:.78rem}" +
+    ".j-trip{margin-top:auto;background:#EAFF26;color:#1b1840;border:0;border-radius:99px;padding:9px 12px;font-weight:700}" +
+    ".j-trip:hover{background:#dcf000}" +
+    ".j-book{display:flex;flex-direction:column;align-items:center;text-align:center;gap:5px}" +
+    ".j-bookcover{width:100%;max-width:140px;aspect-ratio:2/3;border-radius:3px 9px 9px 3px;box-shadow:0 14px 20px -10px rgba(16,14,34,.55);align-items:center;justify-content:center;font-size:2.4rem;margin-bottom:6px}" +
+    ".j-bookcover:before{content:'';position:absolute;left:0;top:0;bottom:0;width:6px;background:rgba(0,0,0,.22);border-right:1px solid rgba(255,255,255,.5);z-index:1}" +
+    ".j-book .j-title{font-size:.875rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}" +
+    ".j-book .j-tags{justify-content:center}" +
+    ".j-more{margin-top:20px;background:var(--cd);border:1px solid var(--ln);border-radius:14px;padding:0 14px}" +
+    ".j-more summary{cursor:pointer;font-weight:700;padding:12px 0}" +
+    ".j-row{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;padding:9px 0;border-top:1px solid var(--ln);font-size:.88rem}" +
+    ".j-row .j-b{margin-left:auto}" +
+    ".j-row .j-b b{font-size:1em}" +
+    ".j-pills{margin-top:28px}" +
+    ".j-pills h3{font-size:1rem;margin:0 0 10px}" +
+    ".j-toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#1b1840;color:#fff;padding:10px 16px;border-radius:12px;font-size:.9rem;max-width:90vw;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,.3)}" +
+    `.j-empty{border-radius:18px;padding:36px 24px;color:#fff;font-weight:700;font-size:1.1rem;text-align:center;background:${grad(PINK, INDIGO)}}`;
 
-  function el(tag, cls, text) {
-    var n = document.createElement(tag);
+  let ROOT, BAL;
+
+  const el = (tag, cls, text) => {
+    const n = document.createElement(tag);
     if (cls) n.className = cls;
     if (text != null) n.textContent = text;
     return n;
-  }
+  };
 
-  function topicOf(it) {
-    var t = TOPICS[it.tp];
-    if (t) return { key: it.tp, e: t[0], n: t[1] };
-    var c = CLUSTERS[it.c] || CLUSTERS.course;
-    return { key: it.tp || "other", e: it.te || c.e, n: it.tp || "Other" };
-  }
+  const clusterOf = it => CLUSTERS[it.c] || CLUSTERS.course;
 
-  function fmtDate(d) {
-    var p = String(d || "").split("-");
-    if (p.length !== 3) return d || "";
-    return { d: +p[2], m: MONTHS[+p[1] - 1], y: p[0] };
-  }
+  const topicOf = it => {
+    const t = TOPICS[it.tp];
+    return t
+      ? { key: it.tp, e: t[0], n: t[1] }
+      : { key: it.tp || "other", e: it.te || clusterOf(it).e, n: it.tp || "Other" };
+  };
 
-  function fmtRange(s, e) {
-    var a = fmtDate(s), b = fmtDate(e);
-    if (typeof a === "string") return a;
-    if (typeof b === "string" || !e) return a.d + " " + a.m + " " + a.y;
-    if (a.y === b.y && a.m === b.m) return a.d === b.d ? a.d + " " + a.m + " " + a.y : a.d + "\u2013" + b.d + " " + b.m + " " + b.y;
-    if (a.y === b.y) return a.d + " " + a.m + " \u2013 " + b.d + " " + b.m + " " + b.y;
-    return a.d + " " + a.m + " " + a.y + " \u2013 " + b.d + " " + b.m + " " + b.y;
-  }
+  const parseDate = d => {
+    const p = String(d || "").split("-");
+    return p.length === 3 && { d: +p[2], m: MONTHS[+p[1] - 1], y: p[0] };
+  };
 
-  function berriesText(it) {
-    if (it.est === 2 || it.b == null) return "\ud83c\udf53 Berries to be evaluated by RSN";
-    var n = Math.ceil(it.b);
-    if (it.est === 1) return "\ud83c\udf53 ~" + n + " Berries (estimate)";
-    if (it.c === "conf") return "\ud83c\udf53 " + n + " Berries for conference ticket";
-    return "\ud83c\udf53 " + n + " Berries";
-  }
+  // "14\u201315 Nov 2026", "30 Nov \u2013 4 Dec 2026"
+  const fmtRange = (s, e) => {
+    const a = parseDate(s), b = e && parseDate(e);
+    if (!a) return s || "";
+    const one = `${a.d} ${a.m} ${a.y}`;
+    if (!b) return one;
+    if (a.y === b.y && a.m === b.m) return a.d === b.d ? one : `${a.d}\u2013${b.d} ${b.m} ${b.y}`;
+    return (a.y === b.y ? `${a.d} ${a.m}` : one) + ` \u2013 ${b.d} ${b.m} ${b.y}`;
+  };
 
-  function aboveBalance(it) {
-    var bal = window.JERRY.bal;
-    return typeof bal === "number" && it.b != null && Math.ceil(it.b) > bal;
-  }
+  // Cover date: [big line, small line]
+  const dateBlock = (s, e) => {
+    const a = parseDate(s), b = e && parseDate(e);
+    if (!a) return [s || "", ""];
+    const my = `${a.m} ${a.y}`;
+    if (!b || (a.y === b.y && a.m === b.m)) return [b && b.d !== a.d ? `${a.d}\u2013${b.d}` : a.d, my];
+    return [a.d, (a.y === b.y ? a.m : my) + ` \u2013 ${b.d} ${b.m} ${b.y}`];
+  };
 
-  function linkOrSpan(it, cls, text) {
-    var n;
-    if (it.l) {
-      n = el("a", cls, text);
-      n.href = it.l;
-      n.target = "_blank";
-      n.rel = "noopener";
-    } else {
-      n = el("span", cls, text);
-    }
+  const berries = it => {
+    const n = el("div", "j-b");
+    if (it.est === 2 || it.b == null) n.textContent = "\ud83c\udf53 Berries to be evaluated by RSN";
+    else n.append(
+      "\ud83c\udf53 ",
+      el("b", 0, (it.est === 1 ? "~" : "") + Math.ceil(it.b).toLocaleString("en")),
+      " Berries" + (it.est === 1 ? " (estimate)" : it.c === "conf" ? " for conference ticket" : "")
+    );
     return n;
-  }
+  };
 
-  function cover(it, cls, height) {
-    var c = CLUSTERS[it.c] || CLUSTERS.course;
-    var t = topicOf(it);
-    var n = linkOrSpan(it, cls, null);
-    n.style.background = c.bg;
-    if (height) n.style.height = height;
-    n.appendChild(document.createTextNode(t.e));
+  const above = it => typeof BAL === "number" && it.b != null && Math.ceil(it.b) > BAL;
+
+  const hasLink = it => /^https?:\/\//i.test(it.l || "");
+
+  const link = (it, cls, text) => {
+    const ok = hasLink(it), n = el(ok ? "a" : "span", cls, text);
+    if (ok) { n.href = it.l; n.target = "_blank"; n.rel = "noopener"; }
+    return n;
+  };
+
+  const cover = (it, cls) => {
+    const c = clusterOf(it), n = link(it, cls + (c.lt ? " lt" : ""));
+    n.style.background = `radial-gradient(circle at 100% 0,rgba(255,255,255,.3),transparent 60%),${c.bg}`;
+    if (n.href) n.tabIndex = -1; // the title link is the keyboard target
+    n.append(el("span", "j-em", topicOf(it).e));
     if (it.img) {
-      var img = document.createElement("img");
-      img.src = it.img;
+      const img = el("img");
       img.alt = "";
       img.loading = "lazy";
-      img.onerror = function () { img.remove(); };
-      n.appendChild(img);
+      img.onload = () => n.classList.add("im");
+      img.onerror = () => img.remove();
+      img.src = it.img;
+      n.prepend(img);
     }
     return n;
-  }
+  };
 
-  function tags(it, extra) {
-    var w = el("div", "j-tags");
-    var t = topicOf(it);
-    w.appendChild(el("span", "j-pill", t.e + " " + t.n));
-    (extra || []).forEach(function (x) { if (x) w.appendChild(el("span", "j-pill", x)); });
-    if (aboveBalance(it)) w.appendChild(el("span", "j-warn", "\u26a0\ufe0f Above your balance"));
+  const tags = (it, extra) => {
+    const w = el("div", "j-tags"), t = topicOf(it);
+    w.append(el("span", "j-pill", `${t.e} ${t.n}`));
+    if (extra) w.append(el("span", "j-pill", extra));
+    if (above(it)) w.append(el("span", "j-warn", "Above your balance"));
     return w;
-  }
+  };
 
-  function noLink(body, it) {
-    if (!it.l) body.appendChild(el("span", "j-ask", "\u2139\ufe0f Ask the RSN team for details"));
-  }
+  const ask = (box, it) => {
+    if (!hasLink(it)) box.append(el("span", "j-ask", "\u2139\ufe0f Ask the RSN team for details"));
+  };
 
-  function toast(msg) {
-    var old = document.querySelector(".j-toast");
-    if (old) old.remove();
-    var t = el("div", "j-toast", msg);
-    document.body.appendChild(t);
-    setTimeout(function () { t.remove(); }, 4000);
-  }
+  let toastTimer;
+  const toast = msg => {
+    let t = ROOT.querySelector(".j-toast");
+    if (!t) { t = el("div", "j-toast"); t.setAttribute("role", "status"); ROOT.append(t); }
+    t.textContent = msg;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.remove(), 4000);
+  };
 
-  function tripButton(it) {
-    var b = el("button", "j-trip", "\u2708\ufe0f Add hotel & flights");
-    b.type = "button";
-    b.addEventListener("click", function (ev) {
-      ev.preventDefault();
-      ev.stopPropagation();
-      var txt = "Make an estimate for travel and accommodation expenses for " + it.t +
-        " (" + (it.loc || "") + ", " + fmtRange(it.s, it.e) + ")";
-      try { window.parent.postMessage({ type: "jerry-trip", text: txt }, "*"); } catch (e) {}
-      var ok = function () { toast("\ud83d\udccb Copied! Paste it in the chat \ud83c\udf53"); };
-      var ko = function () { toast(txt); };
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(txt).then(ok, function () { fallbackCopy(txt) ? ok() : ko(); });
-      } else {
-        fallbackCopy(txt) ? ok() : ko();
-      }
-    });
-    return b;
-  }
-
-  function fallbackCopy(txt) {
+  const fallbackCopy = txt => {
     try {
-      var ta = document.createElement("textarea");
+      const ta = el("textarea");
       ta.value = txt;
-      ta.style.position = "fixed";
-      ta.style.opacity = "0";
-      document.body.appendChild(ta);
+      ta.style.cssText = "position:fixed;opacity:0";
+      document.body.append(ta);
       ta.select();
-      var ok = document.execCommand("copy");
+      const ok = document.execCommand("copy");
       ta.remove();
       return ok;
     } catch (e) { return false; }
-  }
+  };
 
-  function eventTile(it) {
-    var card = el("div", "j-card");
-    card.appendChild(cover(it, "j-cover", "160px"));
-    var body = el("div", "j-body");
-    body.appendChild(linkOrSpan(it, "j-title", it.t));
-    if (it.loc) body.appendChild(el("div", "j-meta", "\ud83d\udccd " + it.loc));
-    if (it.s) body.appendChild(el("div", "j-meta", "\ud83d\udcc5 " + fmtRange(it.s, it.e)));
-    body.appendChild(el("div", "j-berries", berriesText(it)));
-    body.appendChild(tags(it));
-    noLink(body, it);
-    if (it.c === "conf") body.appendChild(tripButton(it));
-    card.appendChild(body);
+  const tripButton = it => {
+    const b = el("button", "j-trip", "\u2708\ufe0f Add hotel & flights");
+    b.type = "button";
+    b.onclick = () => {
+      const txt = `Make an estimate for travel and accommodation expenses for ${it.t} (${it.loc || ""}, ${fmtRange(it.s, it.e)})`;
+      try { window.parent.postMessage({ type: "jerry-trip", text: txt }, "*"); } catch (e) {}
+      const done = ok => toast(ok ? "\ud83d\udccb Copied! Paste it in the chat \ud83c\udf53" : txt);
+      const fb = () => done(fallbackCopy(txt));
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(() => done(1), fb);
+      else fb();
+    };
+    return b;
+  };
+
+  const eventTile = it => {
+    const card = el("div", "j-card"), cv = cover(it, "j-cover ev"), body = el("div", "j-body");
+    if (it.s) {
+      const d = dateBlock(it.s, it.e);
+      cv.append(el("span", "j-day", d[0]), el("span", "j-mon", d[1]));
+    }
+    body.append(link(it, "j-title", it.t));
+    if (it.loc) body.append(el("div", "j-meta", "\ud83d\udccd " + it.loc));
+    body.append(berries(it), tags(it));
+    ask(body, it);
+    if (it.c === "conf") body.append(tripButton(it));
+    card.append(cv, body);
     return card;
-  }
+  };
 
-  function courseTile(it) {
-    var card = el("div", "j-card");
-    card.appendChild(cover(it, "j-cover", "96px"));
-    var body = el("div", "j-body");
-    body.appendChild(linkOrSpan(it, "j-title", it.t));
-    body.appendChild(el("div", "j-berries", berriesText(it)));
-    body.appendChild(tags(it, [FORMATS[it.f] || FORMATS.online]));
-    if (it.d && it.c !== "sub") body.appendChild(el("div", "j-meta", "\u23f1\ufe0f " + it.d));
-    if (it.s) body.appendChild(el("div", "j-meta", "\ud83d\udcc5 " + fmtRange(it.s, it.e)));
-    noLink(body, it);
-    card.appendChild(body);
+  const courseTile = it => {
+    const card = el("div", "j-card"), body = el("div", "j-body");
+    body.append(link(it, "j-title", it.t), berries(it), tags(it, FORMATS[it.f] || FORMATS.online));
+    if (it.d && it.c !== "sub") body.append(el("div", "j-meta", "\u23f1\ufe0f " + it.d));
+    if (it.s) body.append(el("div", "j-meta", "\ud83d\udcc5 " + fmtRange(it.s, it.e)));
+    ask(body, it);
+    card.append(cover(it, "j-cover"), body);
     return card;
-  }
+  };
 
-  function bookTile(it) {
-    var card = el("div", "j-book");
-    card.appendChild(cover(it, "j-bookcover", null));
-    card.appendChild(linkOrSpan(it, "j-title", it.t));
-    if (it.a) card.appendChild(el("div", "j-author", "\u270d\ufe0f " + it.a));
-    card.appendChild(el("div", "j-berries", berriesText(it)));
-    var t = topicOf(it);
-    var w = el("div", "j-tags");
-    w.style.justifyContent = "center";
-    w.appendChild(el("span", "j-pill", t.e + " " + t.n));
-    if (aboveBalance(it)) w.appendChild(el("span", "j-warn", "\u26a0\ufe0f Above your balance"));
-    card.appendChild(w);
-    noLink(card, it);
+  const bookTile = it => {
+    const card = el("div", "j-book");
+    card.append(cover(it, "j-bookcover"), link(it, "j-title", it.t));
+    if (it.a) card.append(el("div", "j-author", it.a));
+    card.append(berries(it), tags(it));
+    ask(card, it);
     return card;
-  }
+  };
 
-  function tile(it) {
-    var kind = (CLUSTERS[it.c] || CLUSTERS.course).kind;
-    if (kind === "event") return eventTile(it);
-    if (kind === "book") return bookTile(it);
-    return courseTile(it);
-  }
+  const TILES = { event: eventTile, course: courseTile, book: bookTile };
+  const tile = it => TILES[clusterOf(it).kind](it);
 
-  function moreRow(it) {
-    var c = CLUSTERS[it.c] || CLUSTERS.course;
-    var t = topicOf(it);
-    var r = el("div", "j-row");
-    r.appendChild(el("span", null, c.e));
-    r.appendChild(linkOrSpan(it, "j-title", it.t));
-    r.appendChild(el("span", "j-berries", berriesText(it)));
-    r.appendChild(el("span", "j-pill", t.e + " " + t.n));
-    if (it.s) r.appendChild(el("span", "j-meta", "\ud83d\udcc5 " + fmtRange(it.s, it.e)));
+  const moreRow = it => {
+    const r = el("div", "j-row"), t = topicOf(it);
+    r.append(clusterOf(it).e + " ", link(it, "j-title", it.t), el("span", "j-pill", `${t.e} ${t.n}`));
+    if (it.s) r.append(el("span", "j-meta", fmtRange(it.s, it.e)));
+    r.append(berries(it));
     return r;
-  }
+  };
 
-  function sortItems(items) {
-    var idx = items.map(function (it, i) { return [it, i]; });
-    idx.sort(function (A, B) {
-      var a = A[0], b = B[0];
-      var ca = CLUSTER_ORDER.indexOf(a.c), cb = CLUSTER_ORDER.indexOf(b.c);
-      if (ca !== cb) return ca - cb;
-      var ab = aboveBalance(a) ? 1 : 0, bb = aboveBalance(b) ? 1 : 0;
-      if (ab !== bb) return ab - bb;
-      if (a.s && b.s && a.s !== b.s) return a.s < b.s ? -1 : 1;
-      return A[1] - B[1];
-    });
-    return idx.map(function (x) { return x[0]; });
-  }
+  // cluster order, then affordable first, then by start date, then original order
+  const sortItems = items =>
+    items
+      .map((it, i) => [it, i])
+      .sort((A, B) => {
+        const a = A[0], b = B[0];
+        return (
+          CLUSTER_ORDER.indexOf(a.c) - CLUSTER_ORDER.indexOf(b.c) ||
+          above(a) - above(b) ||
+          (a.s && b.s && a.s !== b.s ? (a.s < b.s ? -1 : 1) : A[1] - B[1])
+        );
+      })
+      .map(x => x[0]);
+
+  const chip = (label, on, fn) => {
+    const b = el("button", "j-chip" + (on ? " on" : ""), label);
+    b.type = "button";
+    b.setAttribute("aria-pressed", !!on);
+    b.onclick = fn;
+    return b;
+  };
 
   function render() {
-    var D = window.JERRY || {};
-    var root = document.getElementById("jerry");
-    if (!root) { root = el("div"); root.id = "jerry"; document.body.appendChild(root); }
-    root.textContent = "";
+    const D = window.JERRY || {};
+    BAL = D.bal;
+    ROOT = document.getElementById("jerry");
+    if (!ROOT) { ROOT = el("div"); ROOT.id = "jerry"; document.body.append(ROOT); }
 
-    var style = el("style");
-    style.textContent = CSS;
-    root.appendChild(style);
+    const frag = document.createDocumentFragment();
+    const hd = el("div", "j-hd"), h1 = el("h1", "j-h1", D.title || "\ud83c\udf53 Picked for you");
+    hd.append(h1);
+    if (typeof BAL === "number") {
+      const bal = el("div", "j-bal", "\ud83c\udf53 My Berries ");
+      bal.append(el("b", 0, Math.max(0, Math.floor(BAL)).toLocaleString("en")));
+      hd.append(bal);
+    }
+    frag.append(el("style", 0, CSS), hd);
 
-    var h1 = el("h1", "j-h1", D.title || "\ud83c\udf53 Picked for you");
-    root.appendChild(h1);
-
-    if (typeof D.bal === "number") root.appendChild(el("div", "j-bal", "\ud83c\udf53 My Berries: " + Math.max(0, Math.floor(D.bal))));
-
-    if (D.empty || !D.items || !D.items.length) {
-      root.appendChild(el("div", "j-empty", "We couldn't load options right now \ud83c\udf53 \u2013 please try again in a moment!"));
+    const valid = it => it && it.t;
+    const items = sortItems((D.items || []).filter(valid));
+    if (D.empty || !items.length) {
+      frag.append(el("div", "j-empty", "We couldn't load options right now \ud83c\udf53 \u2013 please try again in a moment!"));
+      ROOT.replaceChildren(frag);
       return;
     }
 
-    var notice = el("div", "j-notice", NOTICE);
-    root.appendChild(notice);
-    var chipsBox = el("div", "j-chips");
-    root.appendChild(chipsBox);
-    var grid = el("div", "j-grid");
-    root.appendChild(grid);
-    var more = el("details", "j-more");
-    root.appendChild(more);
-    var pillsBox = el("div", "j-pills");
-    root.appendChild(pillsBox);
+    const notice = el("div", "j-notice", NOTICE), chipsBox = el("div", "j-chips"), grid = el("div", "j-grid"),
+      more = el("details", "j-more"), pillsBox = el("div", "j-pills");
+    frag.append(notice, chipsBox, grid, more, pillsBox);
 
-    var valid = function (it) { return it && it.t; };
-    var items = sortItems(D.items.filter(valid));
-    var moreAll = sortItems((D.more || []).filter(valid)).slice(0, 12);
-    var mode = D.mode === "topic" ? "topic" : "mix";
-    var maxGrid = 6;
+    const moreAll = sortItems((D.more || []).filter(valid)).slice(0, 12);
+    const maxGrid = 6;
 
-    function paint(gridItems, moreItems) {
-      grid.textContent = "";
-      gridItems.forEach(function (it) { grid.appendChild(tile(it)); });
-      grid.className = "j-grid" + (gridItems.length && gridItems.every(function (it) { return it.c === "book"; }) ? " books" : "");
-      notice.style.display = gridItems.some(function (it) { return it.c === "conf"; }) ? "" : "none";
-      more.textContent = "";
-      if (moreItems && moreItems.length) {
-        more.style.display = "";
-        more.open = false;
-        more.appendChild(el("summary", null, "\ud83d\udccb More options (" + moreItems.length + ")"));
-        moreItems.forEach(function (it) { more.appendChild(moreRow(it)); });
-      } else {
-        more.style.display = "none";
-      }
-    }
+    const paint = (gridItems, moreItems) => {
+      grid.replaceChildren(...gridItems.map(tile));
+      grid.className = "j-grid" + (gridItems.length && gridItems.every(it => it.c === "book") ? " books" : "");
+      notice.hidden = !gridItems.some(it => it.c === "conf");
+      more.hidden = !moreItems.length;
+      more.open = false;
+      more.replaceChildren(el("summary", 0, `More options (${moreItems.length})`), ...moreItems.map(moreRow));
+    };
 
-    if (mode === "mix") {
-      var shown = items.slice(0, maxGrid);
-      var extra = moreAll;
-      var present = CLUSTER_ORDER.filter(function (c) { return shown.concat(extra).some(function (it) { return it.c === c; }); });
-      var current = "all";
-      var drawChips = function () {
-        chipsBox.textContent = "";
-        if (present.length < 2) { chipsBox.style.display = "none"; return; }
-        ["all"].concat(present).forEach(function (c) {
-          var label = c === "all" ? "All" : CLUSTERS[c].e + " " + CLUSTERS[c].n;
-          var b = el("button", "j-chip" + (current === c ? " on" : ""), label);
-          b.type = "button";
-          b.addEventListener("click", function () {
-            current = c;
-            drawChips();
-            var f = function (it) { return c === "all" || it.c === c; };
-            paint(shown.filter(f), extra.filter(f));
-          });
-          chipsBox.appendChild(b);
-        });
+    if (D.mode !== "topic") {
+      // mix mode: cluster filter chips
+      const shown = items.slice(0, maxGrid);
+      const present = CLUSTER_ORDER.filter(c => shown.concat(moreAll).some(it => it.c === c));
+      const draw = cur => {
+        const f = it => cur === "all" || it.c === cur;
+        chipsBox.replaceChildren(...["all"].concat(present).map(c =>
+          chip(c === "all" ? "All" : `${CLUSTERS[c].e} ${CLUSTERS[c].n}`, cur === c, () => draw(c))));
+        paint(shown.filter(f), moreAll.filter(f));
       };
-      drawChips();
-      paint(shown, extra);
-      pillsBox.style.display = "none";
-      return;
+      chipsBox.hidden = present.length < 2;
+      pillsBox.hidden = true;
+      draw("all");
+    } else {
+      // topic mode: one cluster, current topic + "More {cluster} you may like" pills
+      chipsBox.hidden = true;
+      const cluster = clusterOf(items[0]);
+      const cur = D.cur || topicOf(items[0]).key;
+      const byTopic = {};
+      items.forEach(it => {
+        const k = topicOf(it).key;
+        (byTopic[k] = byTopic[k] || []).push(it);
+      });
+      const others = Object.keys(byTopic)
+        .filter(k => k !== cur && TOPICS[k] && k !== "soft")
+        .sort((a, b) => TOPIC_ORDER.indexOf(a) - TOPIC_ORDER.indexOf(b))
+        .slice(0, 3);
+      const curItems = byTopic[cur] || items;
+      const title = h1.textContent;
+
+      const pills = active => {
+        const list = [cur].concat(others).filter(x => x !== active && TOPICS[x]);
+        pillsBox.hidden = !list.length || D.pills === false;
+        const w = el("div", "j-chips");
+        w.append(...list.map(x => chip(`${TOPICS[x][0]} ${TOPICS[x][1]}`, 0, () => show(x))));
+        pillsBox.replaceChildren(el("h3", 0, `More ${cluster.n.toLowerCase()} you may like`), w);
+      };
+      const show = k => {
+        if (k === cur) {
+          h1.textContent = title;
+          paint(curItems.slice(0, maxGrid), moreAll);
+        } else {
+          h1.textContent = `${cluster.e} ${cluster.n} \u2013 ${TOPICS[k][0]} ${TOPICS[k][1]}`;
+          paint(byTopic[k].slice(0, 4), []);
+          try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch (e) { window.scrollTo(0, 0); }
+        }
+        pills(k);
+      };
+      show(cur);
     }
 
-    // topic mode: one cluster, current topic + "More {cluster} you may like" pills
-    chipsBox.style.display = "none";
-    var cluster = CLUSTERS[items[0].c] || CLUSTERS.course;
-    var cur = D.cur || topicOf(items[0]).key;
-    var byTopic = {};
-    items.forEach(function (it) {
-      var k = topicOf(it).key;
-      (byTopic[k] = byTopic[k] || []).push(it);
-    });
-    var others = Object.keys(byTopic).filter(function (k) { return k !== cur && TOPICS[k] && k !== "soft"; });
-    others.sort(function (a, b) { return TOPIC_ORDER.indexOf(a) - TOPIC_ORDER.indexOf(b); });
-    others = others.slice(0, 3);
-
-    var curItems = byTopic[cur] || items;
-    paint(curItems.slice(0, maxGrid), moreAll);
-
-    var showTopic = function (k) {
-      var t = TOPICS[k];
-      h1.textContent = cluster.e + " " + cluster.n + " \u2013 " + t[0] + " " + t[1];
-      paint(byTopic[k].slice(0, 4), []);
-      drawPills(k);
-      try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch (e) { window.scrollTo(0, 0); }
-    };
-    var allPillTopics = [cur].concat(others);
-    var drawPills = function (active) {
-      pillsBox.textContent = "";
-      var list = allPillTopics.filter(function (k) { return k !== active && TOPICS[k]; });
-      if (!list.length || D.pills === false) { pillsBox.style.display = "none"; return; }
-      pillsBox.style.display = "";
-      pillsBox.appendChild(el("h3", null, "More " + cluster.n.toLowerCase() + " you may like"));
-      var w = el("div", "j-chips");
-      list.forEach(function (k) {
-        var b = el("button", "j-chip", TOPICS[k][0] + " " + TOPICS[k][1]);
-        b.type = "button";
-        b.addEventListener("click", function () {
-          if (k === cur) {
-            h1.textContent = D.title || h1.textContent;
-            paint(curItems.slice(0, maxGrid), moreAll);
-            drawPills(cur);
-          } else {
-            showTopic(k);
-          }
-        });
-        w.appendChild(b);
-      });
-      pillsBox.appendChild(w);
-    };
-    drawPills(cur);
+    ROOT.replaceChildren(frag);
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", render);
